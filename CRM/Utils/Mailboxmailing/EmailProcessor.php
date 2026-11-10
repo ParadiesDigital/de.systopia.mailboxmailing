@@ -37,7 +37,7 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
    * @throws \Exception
    */
   public static function process($parameters) {
-    $result = [];
+    $result = array();
 
     $mailSetting = new CRM_Mailboxmailing_BAO_MailboxmailingMailSettings();
 
@@ -49,6 +49,7 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
     //find all mail settings.
     $mailSetting->find();
     while ($mailSetting->fetch()) {
+      $mail_setting_result = array();
 
       // Get contacts in sender and recipient groups.
       try {
@@ -58,8 +59,11 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
       catch (Exception $exception) {
         // Add the error message to the results array and go on to the next mail
         // settings set.
-        $mail_setting_result['mail_settings_id'] = $mailSetting->id;
-        $mail_setting_result['error_message'] = $exception->getMessage();
+        $result[] = array(array(
+          'mail_settings_id' => $mailSetting->id,
+          'is_error' => 1,
+          'error_message' => $exception->getMessage(),
+        ));
         continue;
       }
 
@@ -70,14 +74,16 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
       catch (Exception $e) {
         // Add the error message to the results array and go on to the next mail
         // settings set.
-        $mail_setting_result['mail_settings_id'] = $mailSetting->id;
-        $mail_setting_result['error_message']
-          = E::ts('Could not connect to MailStore for %1', [
+        $result[] = array(array(
+          'mail_settings_id' => $mailSetting->id,
+          'is_error' => 1,
+          'error_message' => E::ts('Could not connect to MailStore for %1', array(
             1 => $mailSetting->username . '@' . $mailSetting->server,
-          ])
-          . E::ts('Error message: %1', [
+          ))
+          . ' ' . E::ts('Error message: %1', array(
             1 => $e->getMessage(),
-          ]);
+          )),
+        ));
         continue;
       }
 
@@ -90,12 +96,12 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
 
           $processed = FALSE;
           $mailing = NULL;
-          $mail_result = [];
+          $mail_result = array();
           $mail_result['mail_settings_id'] = $mailSetting->id;
           $mail_result['message_id'] = $mail->messageId;
 
           // Check if sender is allowed to initiate mailing creation.
-          if ($sender_id = array_search(strtolower($mail->from->email), $allowed_senders)) {
+          if (($sender_id = array_search(strtolower($mail->from->email), $allowed_senders, TRUE)) !== FALSE) {
             // Create, schedule and archive CiviCRM Mailing.
             try {
               $mailing = static::createMailing($mail, $mailSetting, $sender_id);
@@ -109,7 +115,7 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
           }
 
           // Check if sender is in recipient group.
-          elseif ($sender_id = array_search(strtolower($mail->from->email), $recipients)) {
+          elseif (($sender_id = array_search(strtolower($mail->from->email), $recipients, TRUE)) !== FALSE) {
             // Send notice to sender informing them about not being allowed to
             // send mailings as recipient.
             try {
@@ -203,17 +209,30 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
    */
   public static function createMailing($mail, $mailSetting, $sender_id) {
     $attachmentCount = 0;
-    $mailingParams = [
+
+    // Sender name: taken from the incoming e-mail (fallback: contact's display
+    // name). Sender address: the configured general from address only.
+    $from = CRM_Utils_Mailboxmailing::resolveFromAddress($mailSetting->from_email_address_id);
+    $from_name = trim((string) $mail->from->name);
+    if ($from_name === '') {
+      $from_name = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact', $sender_id, 'display_name');
+    }
+    $replyto_email = trim((string) $mailSetting->replyto_email);
+    if ($replyto_email === '') {
+      $replyto_email = $mail->from->email;
+    }
+
+    $mailingParams = array(
       'override_verp' => TRUE,
       'forward_replies' => FALSE,
       'open_tracking' => FALSE,
       'url_tracking' => FALSE,
       'visibility' => 'User and User Admin Only',
-      'replyto_email' => $mail->from->email,
+      'replyto_email' => $replyto_email,
       'header_id' => NULL,
       'footer_id' => NULL,
-      'from_email' => $mail->from->email,
-      'from_name' => $mail->from->name,
+      'from_email' => $from['email'],
+      'from_name' => $from_name,
       'msg_template_id' => NULL,
       'created_id' => $sender_id,
       'approver_id' => NULL,
@@ -222,19 +241,19 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
       'scheduled_date' => date('YmdHis'),
       'scheduled_id' => $sender_id,
       'approval_date' => NULL,
-      'groups' => [
-        'include' => [
+      'groups' => array(
+        'include' => array(
           $mailSetting->recipient_group_id,
-        ],
-      ],
-    ];
+        ),
+      ),
+    );
 
     // Evaluate subject pattern.
     $smarty = CRM_Core_Smarty::singleton();
-    $variables = CRM_Utils_Mailboxmailing::getSmartyVariables([
+    $variables = CRM_Utils_Mailboxmailing::getSmartyVariables(array(
       'mailSetting' => $mailSetting,
       'mail' => $mail,
-    ]);
+    ));
     $subject = $smarty->fetchWith('string:' . $mailSetting->subject, $variables);
     $mailingParams['subject'] = $subject;
     $mailingParams['name'] = $subject;
@@ -291,7 +310,7 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
           copy($part->fileName, $displayFileName);
 
           $mailingParams["attachFile_$attachmentCount"]['location'] = $displayFileName;
-          $mailingParams["attachFile_$attachmentCount"]['type'] = implode('/', [$part->contentType, $part->mimeType]);
+          $mailingParams["attachFile_$attachmentCount"]['type'] = implode('/', array($part->contentType, $part->mimeType));
           break;
       }
     }
@@ -299,22 +318,63 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
       throw new Exception(E::ts('Could not create mailing: No plain text or html body parts could be extracted from the e-mail.'));
     }
 
+    // Append the configured signature before the regular CiviCRM footer.
+    $signature = trim(CRM_Utils_Mailboxmailing::decodeHtmlSpecialChars($mailSetting->signature_html));
+    if ($signature !== '') {
+      if (isset($mailingParams['body_html'])) {
+        $mailingParams['body_html'] = static::appendSignature($mailingParams['body_html'], $signature, TRUE);
+      }
+      if (isset($mailingParams['body_text'])) {
+        $text_signature = trim(CRM_Utils_String::htmlToText($signature));
+        $mailingParams['body_text'] = static::appendSignature($mailingParams['body_text'], $text_signature, FALSE);
+      }
+    }
+
     /* @var \CRM_Mailing_BAO_Mailing $mailing */
     $mailing = CRM_Mailing_BAO_Mailing::create($mailingParams);
-    CRM_Core_BAO_File::processAttachment($mailingParams, 'civicrm_mailing', $mailing->id);
 
     // Store the MailSettings ID in a custom field for later
     // traceability.
-    $field = civicrm_api3('CustomField', 'getsingle', [
+    $field = civicrm_api3('CustomField', 'getsingle', array(
       'custom_group_id' => "mailing_mailboxmailing",
       'name' => "MailboxmailingMailSettingsId",
-    ]);
-    civicrm_api3('Mailing', 'create', [
+    ));
+    civicrm_api3('Mailing', 'create', array(
       'id' => $mailing->id,
       'custom_' . $field['id'] => $mailSetting->id,
-    ]);
+    ));
+
+    // The default CiviCRM header is added automatically; remove it unless
+    // explicitly enabled in the settings.
+    if (empty($mailSetting->use_default_header)) {
+      CRM_Core_DAO::executeQuery('UPDATE civicrm_mailing SET header_id = NULL WHERE id = %1', array(
+        1 => array($mailing->id, 'Integer'),
+      ));
+    }
 
     return $mailing;
+  }
+
+  /**
+   * Appends a signature to a mailing body, respecting a surrounding Smarty
+   * {literal} block and the closing </body> tag.
+   */
+  protected static function appendSignature($body, $signature, $is_html) {
+    $literal_end = '';
+    if (substr(rtrim($body), -10) === '{/literal}') {
+      $body = substr(rtrim($body), 0, -10);
+      $literal_end = '{/literal}';
+      $signature = str_replace('{/literal}', '', $signature);
+    }
+    if ($is_html) {
+      $signature = '<div class="mailboxmailing-signature">' . $signature . '</div>';
+      $pos = strripos($body, '</body>');
+      if ($pos !== FALSE) {
+        return substr($body, 0, $pos) . $signature . "\n" . substr($body, $pos) . $literal_end;
+      }
+      return $body . "\n" . $signature . $literal_end;
+    }
+    return $body . "\n\n" . $signature . "\n" . $literal_end;
   }
 
   /**
@@ -325,26 +385,20 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
    * @throws \Exception
    */
   public static function sendDisallowedSenderNotification($mail, $mailSetting, $sender_id) {
-    $sender_contact = civicrm_api3('Contact', 'getsingle', [
+    $sender_contact = civicrm_api3('Contact', 'getsingle', array(
       'id' => $sender_id,
-    ]);
-    if (isset($mailSetting->from_email_address_id)) {
-      $from_email_address = $mailSetting->from_email_address_id;
-    }
-    else {
-      $from_email_address = CRM_Core_BAO_Domain::getNameAndEmail(FALSE, TRUE);
-      $from_email_address = reset($from_email_address);
-    }
+    ));
+    $from_email_address = CRM_Utils_Mailboxmailing::resolveFromAddress($mailSetting->from_email_address_id)['formatted'];
 
     // Evaluate subject pattern.
     $smarty = CRM_Core_Smarty::singleton();
-    $variables = CRM_Utils_Mailboxmailing::getSmartyVariables([
+    $variables = CRM_Utils_Mailboxmailing::getSmartyVariables(array(
       'mailSetting' => $mailSetting,
       'mail' => $mail,
-    ]);
+    ));
     $subject = $smarty->fetchWith('string:' . $mailSetting->notify_disallowed_sender_subject, $variables);
 
-    $mail_params = [
+    $mail_params = array(
       'from' => $from_email_address,
       'toName' => $sender_contact['display_name'],
       'toEmail' => $sender_contact['email'],
@@ -352,15 +406,15 @@ class CRM_Utils_Mailboxmailing_EmailProcessor {
       'bc' => '',
       'subject' => $subject,
       'replyTo' => $from_email_address,
-    ];
+    );
 
     // Render Smarty template.
     $text = CRM_Core_Smarty::singleton()->fetchWith(
       'string:' . $mailSetting->notify_disallowed_sender_template,
-      CRM_Utils_Mailboxmailing::getSmartyVariables([
+      CRM_Utils_Mailboxmailing::getSmartyVariables(array(
         'mailSetting' => $mailSetting,
         'mail' => $mail,
-      ])
+      ))
     );
     $mail_params['text'] = $text;
     $mail_params['html'] = str_replace("<br />\n<br />\n", "</p>\n<p>", '<p>'.nl2br($text).'</p>');

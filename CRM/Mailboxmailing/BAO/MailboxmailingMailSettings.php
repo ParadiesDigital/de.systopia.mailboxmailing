@@ -132,27 +132,27 @@ class CRM_Mailboxmailing_BAO_MailboxmailingMailSettings extends CRM_Mailboxmaili
    * @throws \Exception
    */
   public function getSenders() {
-    $senders = [];
+    $senders = array();
 
     if (!empty($this->sender_group_id)) {
-      $senders = civicrm_api3('Contact', 'get', [
+      $senders = civicrm_api3('Contact', 'get', array(
         'group' => $this->sender_group_id,
-        'options' => [
+        'options' => array(
           'limit' => 0,
-        ],
-        'return' => [
+        ),
+        'return' => array(
           'email',
-        ],
-      ]);
+        ),
+      ));
       if ($senders['is_error']) {
         throw new Exception(
-          E::ts('Error retrieving recipients from group: %1', [
+          E::ts('Error retrieving recipients from group: %1', array(
             1 => $senders['error_message'],
-          ])
+          ))
         );
       }
       $senders = array_map(function($contact) {
-        return $contact['email'];
+        return strtolower(trim($contact['email'] ?? ''));
       }, $senders['values']);
       $senders = array_filter($senders);
     }
@@ -165,27 +165,27 @@ class CRM_Mailboxmailing_BAO_MailboxmailingMailSettings extends CRM_Mailboxmaili
    * @throws \Exception
    */
   public function getRecipients() {
-    $recipients = [];
+    $recipients = array();
 
-    if (!empty($this->sender_group_id)) {
-      $recipients = civicrm_api3('Contact', 'get', [
+    if (!empty($this->recipient_group_id)) {
+      $recipients = civicrm_api3('Contact', 'get', array(
         'group' => $this->recipient_group_id,
-        'options' => [
+        'options' => array(
           'limit' => 0,
-        ],
-        'return' => [
+        ),
+        'return' => array(
           'email',
-        ],
-      ]);
+        ),
+      ));
       if ($recipients['is_error']) {
         throw new Exception(
-          E::ts('Error retrieving recipients from group: %1', [
+          E::ts('Error retrieving recipients from group: %1', array(
             1 => $recipients['error_message'],
-          ])
+          ))
         );
       }
       $recipients = array_map(function($contact) {
-        return $contact['email'];
+        return strtolower(trim($contact['email'] ?? ''));
       }, $recipients['values']);
       $recipients = array_filter($recipients);
     }

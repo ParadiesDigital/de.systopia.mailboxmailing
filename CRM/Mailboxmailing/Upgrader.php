@@ -38,10 +38,10 @@ class CRM_Mailboxmailing_Upgrader extends CRM_Extension_Upgrader_Base {
   public function upgrade_4002() {
     // Attach a custom field to the Mailing entity for tracking how often a
     // bounce report has been sent to the mailing author.
-    $custom_group = civicrm_api3('CustomGroup', 'getsingle', [
+    $custom_group = civicrm_api3('CustomGroup', 'getsingle', array(
       'name' => 'mailing_mailboxmailing',
-    ]);
-    $custom_field = civicrm_api3('CustomField', 'create', [
+    ));
+    $custom_field = civicrm_api3('CustomField', 'create', array(
       'custom_group_id' => $custom_group['id'],
       'label' => 'Mailboxmailing Bounce Report Count',
       'name' => 'MailboxmailingBouncesReportCount',
@@ -51,7 +51,7 @@ class CRM_Mailboxmailing_Upgrader extends CRM_Extension_Upgrader_Base {
       'in_selector' => 0,
       'html_type' => 'Text',
       'default_value' => 0,
-    ]);
+    ));
     if ($custom_field['is_error']) {
       throw new Exception(E::ts('Could not create custom field for Mailing entity.'));
     }
@@ -75,6 +75,33 @@ class CRM_Mailboxmailing_Upgrader extends CRM_Extension_Upgrader_Base {
     $this->ctx->log->info('Applying update 4004: Adding database table columns for notification subjects.');
     // this path is relative to the extension base dir
     $this->executeSqlFile('sql/upgrade_4004.sql');
+    return TRUE;
+  }
+
+  /**
+   * @return bool TRUE on success
+   */
+  public function upgrade_4005() {
+    $this->ctx->log->info('Applying update 4005: Adding database table column for Reply-To address.');
+    $this->executeSqlFile('sql/upgrade_4005.sql');
+    return TRUE;
+  }
+
+  /**
+   * @return bool TRUE on success
+   */
+  public function upgrade_4006() {
+    $this->ctx->log->info('Applying update 4006: Adding database table column for mailing signature.');
+    $this->executeSqlFile('sql/upgrade_4006.sql');
+    return TRUE;
+  }
+
+  /**
+   * @return bool TRUE on success
+   */
+  public function upgrade_4007() {
+    $this->ctx->log->info('Applying update 4007: Adding database table column for default header option.');
+    $this->executeSqlFile('sql/upgrade_4007.sql');
     return TRUE;
   }
 

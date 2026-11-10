@@ -105,7 +105,7 @@
       </tr>
 
       <tr class="crm-mailboxmailing-mail-settings-form-block-subject">
-        <td class="label">{$form.subject.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-smarty","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts escape='htmlattribute' domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
+        <td class="label">{$form.subject.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-smarty","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
         <td>{$form.subject.html}</td>
       </tr>
       <tr>
@@ -119,7 +119,34 @@
       </tr>
       <tr>
         <td class="label">&nbsp;</td>
-        <td class="description">{ts domain="de.systopia.mailboxmailing"}The from email address to use when sending notifications.{/ts}</td>
+        <td class="description">{ts domain="de.systopia.mailboxmailing"}The from email address to use for mailings and notifications. The sender's name is taken from the incoming e-mail.{/ts}</td>
+      </tr>
+
+      <tr class="crm-mailboxmailing-mail-settings-form-block-replyto_email">
+        <td class="label">{$form.replyto_email.label}</td>
+        <td>{$form.replyto_email.html}</td>
+      </tr>
+      <tr>
+        <td class="label">&nbsp;</td>
+        <td class="description">{ts domain="de.systopia.mailboxmailing"}Optional. Replies to mailings are sent to this address. If empty, the address of the original sender is used.{/ts}</td>
+      </tr>
+
+      <tr class="crm-mailboxmailing-mail-settings-form-block-signature_html">
+        <td class="label">{$form.signature_html.label}</td>
+        <td>{$form.signature_html.html}</td>
+      </tr>
+      <tr>
+        <td class="label">&nbsp;</td>
+        <td class="description">{ts domain="de.systopia.mailboxmailing"}Optional. HTML that is appended to every mailing, directly before the regular CiviCRM footer. CiviCRM tokens are allowed.{/ts}</td>
+      </tr>
+
+      <tr class="crm-mailboxmailing-mail-settings-form-block-use_default_header">
+        <td class="label">{$form.use_default_header.label}</td>
+        <td>{$form.use_default_header.html}</td>
+      </tr>
+      <tr>
+        <td class="label">&nbsp;</td>
+        <td class="description">{ts domain="de.systopia.mailboxmailing"}If checked, the default CiviCRM mailing header is added to mailings. Disabled by default.{/ts}</td>
       </tr>
 
       <tr class="crm-mailboxmailing-mail-settings-form-block-notify_disallowed_sender">
@@ -132,7 +159,7 @@
       </tr>
 
       <tr class="crm-mailboxmailing-mail-settings-form-block-notify_disallowed_sender_subject">
-        <td class="label">{$form.notify_disallowed_sender_subject.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_disallowed_sender_subject","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts escape='htmlattribute' domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
+        <td class="label">{$form.notify_disallowed_sender_subject.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_disallowed_sender_subject","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
         <td>{$form.notify_disallowed_sender_subject.html}</td>
       </tr>
       <tr>
@@ -141,7 +168,7 @@
       </tr>
 
       <tr class="crm-mailboxmailing-mail-settings-form-block-notify_disallowed_sender_template">
-        <td class="label">{$form.notify_disallowed_sender_template.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_disallowed_sender_template","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts escape='htmlattribute' domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
+        <td class="label">{$form.notify_disallowed_sender_template.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_disallowed_sender_template","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
         <td>{$form.notify_disallowed_sender_template.html}</td>
       </tr>
       <tr>
@@ -159,7 +186,7 @@
       </tr>
 
       <tr class="crm-mailboxmailing-mail-settings-form-block-notify_sender_errors_subject">
-        <td class="label">{$form.notify_sender_errors_subject.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_sender_errors_subject","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts escape='htmlattribute' domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
+        <td class="label">{$form.notify_sender_errors_subject.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_sender_errors_subject","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
         <td>{$form.notify_sender_errors_subject.html}</td>
       </tr>
       <tr>
@@ -168,7 +195,7 @@
       </tr>
 
       <tr class="crm-mailboxmailing-mail-settings-form-block-notify_sender_errors_template">
-        <td class="label">{$form.notify_sender_errors_template.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_sender_errors_template","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts escape='htmlattribute' domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
+        <td class="label">{$form.notify_sender_errors_template.label}&nbsp;<a onclick='CRM.help("Smarty", {literal}{"id":"id-notify_sender_errors_template","file":"CRM\/Admin\/Form\/MailboxmailingMailSettings"}{/literal}); return false;' href="#" title="{ts domain="de.systopia.mailboxmailing"}Help{/ts}" class="helpicon">&nbsp;</a></td>
         <td>{$form.notify_sender_errors_template.html}</td>
       </tr>
       <tr>

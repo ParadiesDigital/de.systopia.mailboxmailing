@@ -33,7 +33,7 @@ class CRM_Utils_Mailboxmailing_BouncesReportProcessor {
    * @throws \Exception
    */
   public static function process($parameters) {
-    $result = [];
+    $result = array();
 
     $query = Mailing::get()
       ->addSelect(
@@ -115,17 +115,17 @@ class CRM_Utils_Mailboxmailing_BouncesReportProcessor {
 //        ->addValue('mailing_mailboxmailing.MailboxmailingBouncesReportCount', $bounce_report_count)
 //        ->execute();
       $custom_field_bounces_report_count = CRM_Utils_Mailboxmailing::resolveCustomField('MailboxmailingBouncesReportCount');
-      civicrm_api3('Mailing', 'create', [
+      civicrm_api3('Mailing', 'create', array(
         'id' => $mailing['id'],
         $custom_field_bounces_report_count => $bounce_report_count,
-      ]);
+      ));
 
-      $mailing_result = [
+      $mailing_result = array(
         'mailing_id' => $mailing['id'],
         'mail_settings_id' => $mailing['mailing_mailboxmailing.MailboxmailingMailSettingsId'],
         'bounce_report_limit' => $bounce_report_limit,
         'bounce_report_count' => (isset($bounce_report_count) ? ($bounce_report_count == static::BOUNCE_REPORT_COMPLETED ? 'completed' : $bounce_report_count) : 'skipped'),
-      ];
+      );
       if (isset($bounces)) {
         $mailing_result['bounces'] = count($bounces);
       }
@@ -145,27 +145,21 @@ class CRM_Utils_Mailboxmailing_BouncesReportProcessor {
    * @throws \Exception
    */
   public static function sendBouncesReportNotification($mailing, $mailSetting, $bounces) {
-    $sender_contact = civicrm_api3('Contact', 'getsingle', [
+    $sender_contact = civicrm_api3('Contact', 'getsingle', array(
       'id' => $mailing['created_id'],
-    ]);
-    if (isset($mailSetting->from_email_address_id)) {
-      $from_email_address = $mailSetting->from_email_address_id;
-    }
-    else {
-      $from_email_address = CRM_Core_BAO_Domain::getNameAndEmail(FALSE, TRUE);
-      $from_email_address = reset($from_email_address);
-    }
+    ));
+    $from_email_address = CRM_Utils_Mailboxmailing::resolveFromAddress($mailSetting->from_email_address_id)['formatted'];
 
     // Evaluate subject pattern.
     $smarty = CRM_Core_Smarty::singleton();
-    $variables = CRM_Utils_Mailboxmailing::getSmartyVariables([
+    $variables = CRM_Utils_Mailboxmailing::getSmartyVariables(array(
       'mailSetting' => $mailSetting,
       'bounces' => $bounces,
       'mailing' => $mailing,
-    ]);
+    ));
     $subject = $smarty->fetchWith('string:' . $mailSetting->notify_sender_errors_subject, $variables);
 
-    $mail_params = [
+    $mail_params = array(
       'from' => $from_email_address,
       'toName' => $sender_contact['display_name'],
       'toEmail' => $sender_contact['email'],
@@ -173,16 +167,16 @@ class CRM_Utils_Mailboxmailing_BouncesReportProcessor {
       'bc' => '',
       'subject' => $subject,
       'replyTo' => $from_email_address,
-    ];
+    );
 
     // Render Smarty template.
     $text = CRM_Core_Smarty::singleton()->fetchWith(
       'string:' . $mailSetting->notify_sender_errors_template,
-      CRM_Utils_Mailboxmailing::getSmartyVariables([
+      CRM_Utils_Mailboxmailing::getSmartyVariables(array(
         'mailSetting' => $mailSetting,
         'bounces' => $bounces,
         'mailing' => $mailing,
-      ])
+      ))
     );
     $mail_params['text'] = $text;
     $mail_params['html'] = str_replace("<br />\n<br />\n", "</p>\n<p>", '<p>'.nl2br($text).'</p>');

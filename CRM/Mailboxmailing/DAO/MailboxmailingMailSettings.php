@@ -127,6 +127,27 @@ class CRM_Mailboxmailing_DAO_MailboxmailingMailSettings extends CRM_Core_DAO {
   public $from_email_address_id;
 
   /**
+   * Reply-To e-mail address to use for mailings.
+   *
+   * @var string
+   */
+  public $replyto_email;
+
+  /**
+   * HTML signature appended to mailings, before the regular CiviCRM footer.
+   *
+   * @var text
+   */
+  public $signature_html;
+
+  /**
+   * Whether to use the default CiviCRM mailing header.
+   *
+   * @var bool
+   */
+  public $use_default_header;
+
+  /**
    * Whether to notify disallowed sender.
    *
    * @var boolean
@@ -404,9 +425,41 @@ class CRM_Mailboxmailing_DAO_MailboxmailingMailSettings extends CRM_Core_DAO {
             'type' => 'Select',
           ],
           'pseudoconstant' => [
-            'optionGroupName' => 'from_email_addresses',
-            'optionEditPath' => 'civicrm/admin/options/from_email_addresses',
+            'optionGroupName' => 'from_email_address',
+            'optionEditPath' => 'civicrm/admin/options/from_email_address',
           ]
+        ],
+        'replyto_email' => [
+          'name' => 'replyto_email',
+          'type' => CRM_Utils_Type::T_STRING,
+          'title' => CRM_Mailboxmailing_ExtensionUtil::ts('Reply-To e-mail address'),
+          'description' => CRM_Mailboxmailing_ExtensionUtil::ts('Reply-To e-mail address to use for mailings.'),
+          'maxlength' => 255,
+          'size' => CRM_Utils_Type::HUGE,
+          'table_name' => 'civicrm_mailboxmailing_mail_settings',
+          'entity' => 'MailboxmailingMailSettings',
+          'bao' => 'CRM_Mailboxmailing_BAO_MailboxmailingMailSettings',
+          'localizable' => 0,
+        ],
+        'signature_html' => [
+          'name' => 'signature_html',
+          'type' => CRM_Utils_Type::T_LONGTEXT,
+          'title' => CRM_Mailboxmailing_ExtensionUtil::ts('Signature'),
+          'description' => CRM_Mailboxmailing_ExtensionUtil::ts('HTML signature appended to mailings, before the regular CiviCRM footer.'),
+          'table_name' => 'civicrm_mailboxmailing_mail_settings',
+          'entity' => 'MailboxmailingMailSettings',
+          'bao' => 'CRM_Mailboxmailing_BAO_MailboxmailingMailSettings',
+          'localizable' => 0,
+        ],
+        'use_default_header' => [
+          'name' => 'use_default_header',
+          'type' => CRM_Utils_Type::T_BOOLEAN,
+          'title' => CRM_Mailboxmailing_ExtensionUtil::ts('Use default header'),
+          'description' => CRM_Mailboxmailing_ExtensionUtil::ts('Whether to use the default CiviCRM mailing header.'),
+          'table_name' => 'civicrm_mailboxmailing_mail_settings',
+          'entity' => 'MailboxmailingMailSettings',
+          'bao' => 'CRM_Mailboxmailing_BAO_MailboxmailingMailSettings',
+          'localizable' => 0,
         ],
         'notify_disallowed_sender' => [
           'name' => 'notify_disallowed_sender',

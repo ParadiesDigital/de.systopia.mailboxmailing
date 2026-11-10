@@ -24,13 +24,13 @@ use CRM_Mailboxmailing_ExtensionUtil as E;
  * @see http://wiki.civicrm.org/confluence/display/CRMDOC/API+Architecture+Standards
  */
 function _civicrm_api3_job_process_mailboxmailing_spec(&$spec) {
-  $spec['id'] = [
+  $spec['id'] = array(
     'name' => 'id',
     'title' => E::ts('MailboxmailingMailSettings ID'),
     'type' => CRM_Utils_Type::T_INT,
     'api.required' => 0,
     'description' => E::ts('The ID of the MailboxmailingMailSettings configuration to process.'),
-  ];
+  );
 }
 
 /**
@@ -40,7 +40,7 @@ function _civicrm_api3_job_process_mailboxmailing_spec(&$spec) {
  * @return array API result descriptor
  * @see civicrm_api3_create_success
  * @see civicrm_api3_create_error
- * @throws CRM_Core_Exception
+ * @throws API_Exception
  */
 function civicrm_api3_job_process_mailboxmailing($params) {
   try {
